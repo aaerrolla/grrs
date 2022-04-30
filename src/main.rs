@@ -1,17 +1,8 @@
-// feature-3 - using BufReader
-// using clap  https://docs.rs/clap/   to handle command line arguments
-// clap supports subcommands, shell completions and good help messages
-
-// Exercise for the reader: This is not the best implementation: 
-// It will read the whole file into memory – however large the file may be. 
-// Find a way to optimize it! 
-// (One idea might be to use a BufReader instead of read_to_string().)
-// (https://doc.rust-lang.org/1.39.0/std/io/struct.BufReader.html) 
+// feature-4 - error handling 
+// using match with  panic! 
+// using wnwrap() shortcut
 
 use clap::Parser;
-use std::io::prelude::BufRead;
-use std::io::BufReader;
-use std::fs::File;
 
 /// Search for a pattern in a file and display the lines that contain it.
 #[derive(Parser)]
@@ -26,21 +17,43 @@ struct Cli {
 fn main() {
     let args = Cli::parse();   
    
-    // use BufReader
-    let file = File::open(&args.path);
-    match file {
-        Ok(file) => {
-            let mut reader = BufReader::new(file);
-            let mut line =  String::new();
-            while reader.read_line(&mut line).expect("unable to read") != 0 {
-                if line.contains(&args.pattern) {
-                    println!("{}", line );
-                }
-                line.clear();
-            }
+    // how to handle error
+    // function like read_to_string returns Result enum 
+    let result = std::fs::read_to_string(&args.path);
+    match result {
+        Ok(content) => { 
+            println!("File content: {}" , content);
         }
         Err(error) => {
-            println!("Error {} ", error);    
+            println!(" There is error {}", error);
         }
     }
+
+
+    // if we want to access content outside of the match 
+    // we wont be able to do so 
+    // to fix this match  has to return the same type from  both branches  Ok and Err 
+    // it is easy to  return from Ok  branch  , but difficult to deal with Err case
+    //  to hadle error case , we just exist the program flow and do not return anything to caller
+
+    let result1 = std::fs::read_to_string(&args.path);
+    let content1 = match result1 {
+        Ok(content) => {
+            content
+        }
+        Err(error) => {
+            panic!("Can't deal with {}, just exist here" , error);
+        }
+    };  
+
+    // if above match result in error program will exit and we never reach this line  
+    // aslso it makes sense , since we can't to wihout reading file 
+    print!("file content: {}", content1);
+
+    //  there is shortcut for this kind of situation where when error condition we panic
+    // using unwrap  
+    // above lines 37  to 45  are reduced to one line with unwrap()
+    
+    let content2 = std::fs::read_to_string(&args.path).unwrap();
+    print!("file content: {}", content2);
 }
