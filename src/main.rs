@@ -27,6 +27,11 @@ fn handle_cmd_with_return_shortcut() -> Result<()> {
 
     let content = std::fs::read_to_string(&args.path)
         .with_context(|| format!("could not read file `{:?}`", &args.path))?;
-    println!("file content: {}", content);
+
+    for line  in content.lines() {
+        if line.contains(&args.pattern) {
+            println!("{}" , line);
+        }
+    }
     Ok(())
 }
